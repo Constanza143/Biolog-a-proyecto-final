@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Ruta de Hábitos: Compañeros</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Tailwind CSS & React Scripts -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          forest: {
+            900: '#0e241f',
+            800: '#14322C',
+            700: '#1c423b',
+            600: '#26544b',
+            500: '#346d62',
+          },
+          parchment: {
+            100: '#FFFDF7',
+            200: '#FAF3E4',
+            300: '#F0E4CE',
+            400: '#E4D3B4',
+          },
+          gold: {
+            DEFAULT: '#E8A33D',
+            hover: '#d48f2a',
+            light: '#f5c378'
+          },
+          terracotta: {
+            DEFAULT: '#E85D4C',
+            dark: '#c74535',
+            light: '#f28174'
+          },
+          sage: {
+            DEFAULT: '#7FA37A',
+            dark: '#62855d',
+            light: '#a3c29e'
+          }
+        },
+        fontFamily: {
+          fredoka: ['Fredoka', 'sans-serif'],
+          nunito: ['Nunito', 'sans-serif']
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    background-color: #14322C;
+    background-image: radial-gradient(rgba(250, 243, 228, 0.06) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+    font-family: 'Nunito', sans-serif;
+    color: #2c3e35;
+  }
+
+  /* 3D Retro Tactile Button Shadows */
+  .btn-3d {
+    box-shadow: 0 4px 0 #0e241f;
+    transition: all 0.1s ease;
+  }
+  .btn-3d:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #0e241f;
+  }
+
+  .btn-3d-gold {
+    box-shadow: 0 4px 0 #ba791b;
+  }
+  .btn-3d-gold:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #ba791b;
+  }
+
+  .btn-3d-terracotta {
+    box-shadow: 0 4px 0 #a33224;
+  }
+  .btn-3d-terracotta:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #a33224;
+  }
+
+  .card-3d {
+    box-shadow: 0 6px 0 rgba(14, 36, 31, 0.4);
+  }
+
+  /* Floating and Breathing Animations */
+  @keyframes petBob {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(1deg); }
+  }
+  .animate-pet-bob {
+    animation: petBob 3s ease-in-out infinite;
+  }
+
+  @keyframes auraPulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.08); opacity: 0.95; }
+  }
+  .animate-aura {
+    animation: auraPulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0) opacity(1); }
+    100% { transform: translateY(-40px) opacity(0); }
+  }
+  .animate-float-up {
+    animation: floatUp 1.2s ease-out forwards;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #14322C;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #346d62;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7FA37A;
+  }
+</style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased selection:bg-gold selection:text-slate-900">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+
+// 1. ANIMAL SPECIES DEFINITIONS
+const SPECIES = {
+  dragon: { id: 'dragon', name: 'Dragón', icon: '🐲', desc: 'Místico y noble' },
+  zorro: { id: 'zorro', name: 'Zorro', icon: '🦊', desc: 'Astuto y veloz' },
+  buho: { id: 'buho', name: 'Búho', icon: '🦉', desc: 'Sabio y sereno' },
+  axolote: { id: 'axolote', name: 'Axolote', icon: '🦎', desc: 'Mágico y alegre' },
+  panda: { id: 'panda', name: 'Panda', icon: '🐼', desc: 'Tranquilo y zen' },
+  gatito: { id: 'gatito', name: 'Gatito', icon: '🐱', desc: 'Curioso y elegante' },
+  lobito: { id: 'lobito', name: 'Lobito', icon: '🐺', desc: 'Leal y valiente' },
+  osito: { id: 'osito', name: 'Osito', icon: '🐻', desc: 'Cálido y protector' },
+  pinguino: { id: 'pinguino', name: 'Pingüino', icon: '🐧', desc: 'Simpático y constante' },
+  capibara: { id: 'capibara', name: 'Capibara', icon: '🦫', desc: 'Amigable e imperturbable' }
+};
+
+// 2. PERSONALITIES WITH DIALOGUES
+const PERSONALITIES = {
+  alegre: {
+    id: 'alegre', name: 'Alegre', icon: '✨',
+    quotes: [
+      "¡Hoy es un gran día para cumplir metas! 🌟",
+      "¡Me llena de energía ver cómo avanzas! 🎉",
+      "¡Un paso a la vez y llegamos a las estrellas! ✨",
+      "¡Eres increíble! ¡A por la siguiente misión! 🚀"
+    ]
+  },
+  valiente: {
+    id: 'valiente', name: 'Valiente', icon: '⚔️',
+    quotes: [
+      "¡Ningún hábito es demasiado difícil para nosotros! 🗡️",
+      "¡Forjamos nuestra fuerza día con día! 💪",
+      "¡Mantente firme en la batalla por tu bienestar! 🛡️",
+      "¡La constancia es el escudo del guerrero! 🔥"
+    ]
+  },
+  zen: {
+    id: 'zen', name: 'Zen', icon: '🧘',
+    quotes: [
+      "Respira profundo. Cada pequeño momento cuenta... 🍃",
+      "La serenidad se cultiva hábito a hábito. 🌸",
+      "Siente la paz de avanzar con calma y armonía. 🎋",
+      "Un río fluye suave pero transforma la montaña. 🌊"
+    ]
+  },
+  curioso: {
+    id: 'curioso', name: 'Curioso', icon: '🔍',
+    quotes: [
+      "¿Qué hábito descubriremos y dominaremos hoy? 📖",
+      "¡Aprender algo nuevo nos hace más fuertes! 💡",
+      "¡Me encanta explorar nuevas rutinas contigo! 🗺️",
+      "¡Cada logro oculta una gran recompensa! 🎁"
+    ]
+  },
+  gloton: {
+    id: 'gloton', name: 'Glotón', icon: '🍎',
+    quotes: [
+      "¿Completamos este hábito y vamos por un snack saludable? 🍏",
+      "¡Las recompensas sabrosas nos esperan! 🍓",
+      "¡Nutrir cuerpo y mente es el mejor banquete! 🥗",
+      "¡Completar tareas me da mucha hambre de triunfo! 🥞"
+    ]
+  }
+};
+
+// 3. COLOR PALETTES FOR FULL BODY GRADIENTS
+const COLOR_PALETTES = [
+  { id: 'emerald', name: 'Bosque Sagrado', primary: '#2ecc71', secondary: '#1abc9c', belly: '#e8f8f5' },
+  { id: 'amber', name: 'Zorro Dorado', primary: '#e67e22', secondary: '#d35400', belly: '#fdf2e9' },
+  { id: 'sapphire', name: 'Noche Cósmica', primary: '#3498db', secondary: '#2980b9', belly: '#ebf5fb' },
+  { id: 'amethyst', name: 'Místico Violeta', primary: '#9b59b6', secondary: '#8e44ad', belly: '#f5eeed' },
+  { id: 'rose', name: 'Flor de Sakura', primary: '#ff7675', secondary: '#d63031', belly: '#ffeaa7' },
+  { id: 'charcoal', name: 'Sombras Puras', primary: '#485460', secondary: '#1e272e', belly: '#d2dae2' },
+  { id: 'sand', name: 'Capibara Cálido', primary: '#a77b56', secondary: '#805a3b', belly: '#f3e5ab' }
+];
+
+// 4. POSES AND EMOTIONS
+const POSES = {
+  happy: { id: 'happy', name: 'Feliz', icon: '😊' },
+  determined: { id: 'determined', name: 'Determinado', icon: '😤' },
+  sleeping: { id: 'sleeping', name: 'Durmiendo', icon: '😴' },
+  celebrating: { id: 'celebrating', name: 'Celebrando', icon: '🥳' },
+  energized: { id: 'energized', name: 'Energizado', icon: '⚡' }
+};
+
+// 5. EQUIPMENT SHOP CATALOGUE
+const EQUIPMENT_CATALOGUE = [
+  // HEAD
+  { id: 'crown_gold', slot: 'head', name: 'Corona Real', icon: '👑', price: 60, desc: 'Para mascotas verdaderamente augustas' },
+  { id: 'wizard_hat', slot: 'head', name: 'Sombrero Mágico', icon: '🎩', price: 50, desc: 'Aumenta la concentración' },
+  { id: 'sun_glasses', slot: 'head', name: 'Gafas de Sol Cool', icon: '🕶️', price: 35, desc: 'Estilo inigualable' },
+  { id: 'bunny_ears', slot: 'head', name: 'Orejas de Conejo', icon: '🐰', price: 30, desc: 'Tiemblan de alegría' },
+  { id: 'knight_helm', slot: 'head', name: 'Casco de Caballero', icon: '🪖', price: 70, desc: 'Protección máxima' },
+  { id: 'lucky_flower', slot: 'head', name: 'Flor de la Suerte', icon: '🌸', price: 25, desc: 'Aroma fresco y relajante' },
+  { id: 'headphones', slot: 'head', name: 'Auriculares Pro', icon: '🎧', price: 45, desc: 'Música de alta fidelidad' },
+  { id: 'party_hat', slot: 'head', name: 'Gorro de Fiesta', icon: '🥳', price: 20, desc: 'Siempre hay motivo para celebrar' },
+
+  // CLOTHES / BODY
+  { id: 'cape_hero', slot: 'body', name: 'Capa Heroica', icon: '🧣', price: 55, desc: 'Ondea majestuosamente con el viento' },
+  { id: 'vest_adventure', slot: 'body', name: 'Chaleco Explorador', icon: '🎽', price: 40, desc: 'Lleno de bolsillos útiles' },
+  { id: 'scarf_cozy', slot: 'body', name: 'Bufanda Tejida', icon: '🧣', price: 25, desc: 'Cálida y confortable' },
+  { id: 'bandana_red', slot: 'body', name: 'Pañuelo Valiente', icon: '🔴', price: 20, desc: 'Distintivo de audacia' },
+  { id: 'plate_armor', slot: 'body', name: 'Armadura de Placas', icon: '🛡️', price: 80, desc: 'Resistencia invencible' },
+  { id: 'tutu_dance', slot: 'body', name: 'Tutú de Baile', icon: '🩰', price: 45, desc: 'Ligereza y elegancia' },
+
+  // HAND / PAW
+  { id: 'wand_magic', slot: 'hand', name: 'Varita de Cristal', icon: '🪄', price: 50, desc: 'Canaliza la fuerza de tus hábitos' },
+  { id: 'wooden_sword', slot: 'hand', name: 'Espada de Madera', icon: '🗡️', price: 35, desc: 'Ideal para practicar' },
+  { id: 'water_bottle', slot: 'hand', name: 'Cantimplora 2L', icon: '🧴', price: 25, desc: 'Hidratación siempre a mano' },
+  { id: 'open_book', slot: 'hand', name: 'Libro Antiguo', icon: '📖', price: 40, desc: 'Conocimiento ancestral' },
+  { id: 'shield_wood', slot: 'hand', name: 'Escudo de Roble', icon: '🛡️', price: 45, desc: 'Defensa sólida' },
+  { id: 'fishing_rod', slot: 'hand', name: 'Caña de Pescar', icon: '🎣', price: 30, desc: 'Paciencia y paz' },
+
+  // AURA
+  { id: 'aura_stars', slot: 'aura', name: 'Polvo de Estrellas', icon: '✨', price: 75, desc: 'Destellos cósmicos a tu alrededor' },
+  { id: 'aura_fire', slot: 'aura', name: 'Fuego Valiente', icon: '🔥', price: 85, desc: 'Pasión e intensidad pura' },
+  { id: 'aura_bubbles', slot: 'aura', name: 'Burbujas Zen', icon: '🫧', price: 60, desc: 'Calma flotante' },
+  { id: 'aura_leaves', slot: 'aura', name: 'Hojas Danzantes', icon: '🍃', price: 65, desc: 'Brisa del bosque sagrado' },
+
+  // COMPANION
+  { id: 'pet_butterfly', slot: 'pet', name: 'Mariposa Luz', icon: '🦋', price: 50, desc: 'Revolotea alegremente' },
+  { id: 'pet_bird', slot: 'pet', name: 'Pajarito Azul', icon: '🐦', price: 55, desc: 'Canta melodías motivacionales' },
+  { id: 'pet_firefly', slot: 'pet', name: 'Luciérnaga Guía', icon: '💡', price: 45, desc: 'Ilumina tu camino' },
+  { id: 'pet_ghost', slot: 'pet', name: 'Fantasmito Alegre', icon: '👻', price: 70, desc: 'Un amigo entrañable' }
+];
+
+// PRESET HEALTH CHALLENGES
+const PRESET_HEALTH_CHALLENGES = [
+  { title: "Tomar 2 Litros de Agua", type: "habit", positive: true, negative: false, category: "💧 Hidratación" },
+  { title: "Dormir 8 Horas Continuas", type: "daily", category: "🌙 Sueño Reparador" },
+  { title: "Pausa Activa de Estiramiento", type: "habit", positive: true, negative: false, category: "🧘 Movimiento" },
+  { title: "Mantener Postura Correcta", type: "habit", positive: true, negative: true, category: "🪑 Postura" },
+  { title: "Desconexión Digital (1 hora)", type: "daily", category: "📵 Bienestar Digital" },
+  { title: "Comer 1 Fruta o Verdura Fresca", type: "habit", positive: true, negative: false, category: "🍎 Nutrición" },
+  { title: "Lectura Consciente 15 Minutos", type: "daily", category: "📚 Mente Activa" }
+];
+
+
+// SVG FULL-BODY ANIMAL RENDERER COMPONENT
+function FullBodyAnimal({ pet, scale = 1, onClick }) {
+  const palette = COLOR_PALETTES.find(p => p.id === pet.colorId) || COLOR_PALETTES[0];
+  const pose = pet.pose || 'happy';
+  const eq = pet.equipped || {};
+
+  // Dialog and click reaction particles
+  const [clickHearts, setClickHearts] = useState([]);
+  const [currentQuote, setCurrentQuote] = useState(null);
+
+  const handleAnimalClick = (e) => {
+    // Generate floating hearts/emotes
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const newHeart = { id: Date.now(), x, y };
+    setClickHearts(prev => [...prev.slice(-4), newHeart]);
+
+    // Random personality quote
+    const quotes = PERSONALITIES[pet.personality]?.quotes || PERSONALITIES.alegre.quotes;
+    const q = quotes[Math.floor(Math.random() * quotes.length)];
+    setCurrentQuote(q);
+
+    if (onClick) onClick();
+  };
+
+  return (
+    <div 
+      onClick={handleAnimalClick}
+      className="relative cursor-pointer select-none flex flex-col items-center justify-center group"
+      style={{ width: 220 * scale, height: 260 * scale }}
+    >
+      {/* Dynamic Floating Speech Bubble */}
+      {currentQuote && (
+        <div className="absolute -top-12 z-30 bg-parchment-100 text-forest-900 border-2 border-forest-800 px-3 py-1.5 rounded-2xl text-xs font-bold font-fredoka shadow-lg max-w-[200px] text-center animate-bounce">
+          {currentQuote}
+          <div className="absolute left-1/2 -bottom-2 -translate-x-1/2 w-0 h-0 border-l-6 border-r-6 border-t-6 border-l-transparent border-r-transparent border-t-forest-800"></div>
+        </div>
+      )}
+
+      {/* Heart Particles on Click */}
+      {clickHearts.map(h => (
+        <span 
+          key={h.id} 
+          className="absolute z-40 text-xl pointer-events-none animate-float-up"
+          style={{ left: h.x, top: h.y }}
+        >
+          💖
+        </span>
+      ))}
+
+      {/* SVG Canvas for Full-Body Render */}
+      <svg 
+        width={200 * scale} 
+        height={220 * scale} 
+        viewBox="0 0 200 220" 
+        className="overflow-visible animate-pet-bob"
+      >
+        <defs>
+          <linearGradient id={`grad_body_${pet.colorId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={palette.primary} />
+            <stop offset="100%" stopColor={palette.secondary} />
+          </linearGradient>
+
+          <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="2" floodColor="#0e241f" floodOpacity="0.35" />
+          </filter>
+        </defs>
+
+        <g filter="url(#shadow3d)">
+          {/* AURA EFFECTS */}
+          {eq.aura === 'aura_stars' && (
+            <g className="animate-aura">
+              <circle cx="100" cy="110" r="85" fill="none" stroke="#E8A33D" strokeWidth="4" strokeDasharray="8 8" opacity="0.6" />
+              <text x="20" y="40" fontSize="20">✨</text>
+              <text x="160" y="160" fontSize="20">⭐</text>
+            </g>
+          )}
+          {eq.aura === 'aura_fire' && (
+            <g className="animate-aura">
+              <circle cx="100" cy="115" r="80" fill="none" stroke="#E85D4C" strokeWidth="6" strokeDasharray="12 6" opacity="0.7" />
+              <text x="15" y="110" fontSize="22">🔥</text>
+              <text x="165" y="110" fontSize="22">🔥</text>
+            </g>
+          )}
+          {eq.aura === 'aura_bubbles' && (
+            <g className="animate-aura">
+              <circle cx="25" cy="80" r="12" fill="#7FA37A" opacity="0.4" />
+              <circle cx="170" cy="60" r="18" fill="#7FA37A" opacity="0.3" />
+            </g>
+          )}
+          {eq.aura === 'aura_leaves' && (
+            <g className="animate-aura">
+              <text x="25" y="60" fontSize="18">🍃</text>
+              <text x="160" y="140" fontSize="18">🌿</text>
+            </g>
+          )}
+
+          {/* BACK BODY / TAIL SPECIFICS */}
+          {pet.species === 'zorro' && (
+            <path d="M140 120 Q185 100 170 160 Q130 180 120 150 Z" fill={palette.secondary} />
+          )}
+          {pet.species === 'dragon' && (
+            <g fill={palette.secondary}>
+              <path d="M50 110 Q20 80 40 140 Z" />
+              <path d="M150 110 Q180 80 160 140 Z" />
+              <path d="M130 140 Q170 170 140 180 Z" />
+            </g>
+          )}
+
+          {/* CLOTHES: CAPE */}
+          {eq.body === 'cape_hero' && (
+            <path d="M60 90 L140 90 L155 185 L45 185 Z" fill="#E85D4C" />
+          )}
+
+          {/* LEGS & FEET */}
+          <ellipse cx="75" cy="180" rx="16" ry="10" fill={palette.secondary} />
+          <ellipse cx="125" cy="180" rx="16" ry="10" fill={palette.secondary} />
+
+          {/* TORSO / BODY */}
+          <path 
+            d="M60 90 C50 140, 50 175, 75 180 C90 183, 110 183, 125 180 C150 175, 150 140, 140 90 Z" 
+            fill={`url(#grad_body_${pet.colorId})`} 
+          />
+
+          {/* BELLY */}
+          <ellipse cx="100" cy="135" rx="28" ry="32" fill={palette.belly} />
+
+          {/* CLOTHES: BODY SUITS */}
+          {eq.body === 'vest_adventure' && (
+            <path d="M62 95 L138 95 L135 150 L65 150 Z" fill="#E8A33D" rx="4" />
+          )}
+          {eq.body === 'scarf_cozy' && (
+            <rect x="60" y="85" width="80" height="18" rx="8" fill="#E85D4C" />
+          )}
+          {eq.body === 'plate_armor' && (
+            <path d="M60 95 L140 95 L135 160 L65 160 Z" fill="#95a5a6" />
+          )}
+
+          {/* ARMS / PAWS */}
+          <ellipse cx="55" cy="120" rx="12" ry="20" fill={palette.primary} transform="rotate(15 55 120)" />
+          <ellipse cx="145" cy="120" rx="12" ry="20" fill={palette.primary} transform="rotate(-15 145 120)" />
+
+          {/* HEAD BASE */}
+          <circle cx="100" cy="70" r="42" fill={`url(#grad_body_${pet.colorId})`} />
+
+          {/* SPECIES HEAD FEATURES */}
+          {pet.species === 'zorro' && (
+            <g fill={palette.primary}>
+              <polygon points="65,40 50,5 80,30" />
+              <polygon points="135,40 150,5 120,30" />
+            </g>
+          )}
+          {pet.species === 'gatito' && (
+            <g fill={palette.secondary}>
+              <polygon points="68,40 58,15 82,32" />
+              <polygon points="132,40 142,15 118,32" />
+            </g>
+          )}
+          {pet.species === 'buho' && (
+            <g fill={palette.belly}>
+              <circle cx="82" cy="65" r="16" />
+              <circle cx="118" cy="65" r="16" />
+            </g>
+          )}
+          {pet.species === 'panda' && (
+            <g fill="#2c3e50">
+              <circle cx="68" cy="38" r="12" />
+              <circle cx="132" cy="38" r="12" />
+              <ellipse cx="86" cy="68" rx="10" ry="8" />
+              <ellipse cx="114" cy="68" rx="10" ry="8" />
+            </g>
+          )}
+          {pet.species === 'capibara' && (
+            <rect x="75" y="65" width="50" height="25" rx="10" fill={palette.secondary} />
+          )}
+
+          {/* EYES & EMOTION POSES */}
+          {pose === 'sleeping' ? (
+            <g stroke="#2c3e50" strokeWidth="3" strokeLinecap="round">
+              <path d="M 80 68 Q 87 75 94 68" fill="none" />
+              <path d="M 106 68 Q 113 75 120 68" fill="none" />
+              <text x="140" y="40" fontSize="16" fill="#7FA37A" fontWeight="bold">zzz...</text>
+            </g>
+          ) : pose === 'determined' ? (
+            <g fill="#2c3e50">
+              <polygon points="78,58 96,65 96,72 78,65" />
+              <polygon points="122,58 104,65 104,72 122,65" />
+              <circle cx="87" cy="68" r="4" fill="#fff" />
+              <circle cx="113" cy="68" r="4" fill="#fff" />
+            </g>
+          ) : (
+            /* Happy / Energized Eyes */
+            <g fill="#2c3e50">
+              <circle cx="85" cy="66" r="6" />
+              <circle cx="115" cy="66" r="6" />
+              <circle cx="87" cy="64" r="2.5" fill="#fff" />
+              <circle cx="117" cy="64" r="2.5" fill="#fff" />
+            </g>
+          )}
+
+          {/* NOSE & MOUTH */}
+          <polygon points="96,75 104,75 100,80" fill="#2c3e50" />
+          <path d="M 95 82 Q 100 87 105 82" fill="none" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* CHEEKS */}
+          <circle cx="74" cy="76" r="7" fill="#E85D4C" opacity="0.35" />
+          <circle cx="126" cy="76" r="7" fill="#E85D4C" opacity="0.35" />
+
+          {/* HEAD EQUIPMENT */}
+          {eq.head === 'crown_gold' && (
+            <path d="M72 35 L82 15 L100 28 L118 15 L128 35 Z" fill="#E8A33D" stroke="#c7801a" strokeWidth="2" />
+          )}
+          {eq.head === 'wizard_hat' && (
+            <g>
+              <path d="M100 2 L130 38 L70 38 Z" fill="#1c423b" />
+              <ellipse cx="100" cy="38" rx="38" ry="8" fill="#14322C" />
+              <rect x="85" y="30" width="30" height="8" fill="#E8A33D" />
+            </g>
+          )}
+          {eq.head === 'sun_glasses' && (
+            <g fill="#0e241f">
+              <rect x="70" y="58" width="26" height="16" rx="4" />
+              <rect x="104" y="58" width="26" height="16" rx="4" />
+              <line x1="96" y1="64" x2="104" y2="64" stroke="#0e241f" strokeWidth="3" />
+            </g>
+          )}
+          {eq.head === 'bunny_ears' && (
+            <g fill="#FFFDF7" stroke="#E85D4C" strokeWidth="2">
+              <ellipse cx="78" cy="18" rx="8" ry="22" />
+              <ellipse cx="122" cy="18" rx="8" ry="22" />
+            </g>
+          )}
+          {eq.head === 'lucky_flower' && (
+            <text x="115" y="38" fontSize="24">🌸</text>
+          )}
+          {eq.head === 'headphones' && (
+            <g stroke="#E85D4C" strokeWidth="5" fill="none">
+              <path d="M65 65 C 65 25, 135 25, 135 65" />
+              <rect x="58" y="58" width="12" height="20" rx="4" fill="#0e241f" stroke="none" />
+              <rect x="130" y="58" width="12" height="20" rx="4" fill="#0e241f" stroke="none" />
+            </g>
+          )}
+
+          {/* HAND / PAW ITEM */}
+          {eq.hand === 'wand_magic' && (
+            <g transform="translate(150, 100) rotate(-20)">
+              <rect x="0" y="0" width="6" height="50" fill="#7A5230" rx="2" />
+              <text x="-8" y="-4" fontSize="18">🌟</text>
+            </g>
+          )}
+          {eq.hand === 'wooden_sword' && (
+            <g transform="translate(148, 95) rotate(25)">
+              <rect x="0" y="0" width="8" height="48" fill="#E8A33D" rx="2" />
+              <rect x="-6" y="36" width="20" height="6" fill="#7A5230" />
+            </g>
+          )}
+          {eq.hand === 'water_bottle' && (
+            <text x="145" y="130" fontSize="26">🧴</text>
+          )}
+          {eq.hand === 'open_book' && (
+            <text x="140" y="130" fontSize="26">📖</text>
+          )}
+
+          {/* PET COMPANION */}
+          {eq.pet && (
+            <g transform="translate(10, 130)">
+              {eq.pet === 'pet_butterfly' && <text x="0" y="0" fontSize="26" className="animate-bounce">🦋</text>}
+              {eq.pet === 'pet_bird' && <text x="0" y="0" fontSize="26" className="animate-bounce">🐦</text>}
+              {eq.pet === 'pet_firefly' && <text x="0" y="0" fontSize="26" className="animate-bounce">💡</text>}
+              {eq.pet === 'pet_ghost' && <text x="0" y="0" fontSize="26" className="animate-bounce">👻</text>}
+            </g>
+          )}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+
+function App() {
+  // PERSISTENT USER STATE
+  const [pet, setPet] = useState(() => {
+    const saved = localStorage.getItem("ruta_habitos_pet");
+    return saved ? JSON.parse(saved) : {
+      name: "Kira",
+      title: "La Firme",
+      species: "zorro",
+      personality: "alegre",
+      colorId: "amber",
+      pose: "happy",
+      level: 1,
+      xp: 0,
+      coins: 50,
+      happiness: 80,
+      energy: 90,
+      equipped: { head: null, body: null, hand: null, aura: null, pet: null },
+      inventory: ["crown_gold", "water_bottle"]
+    };
+  });
+
+  const [habits, setHabits] = useState(() => {
+    const saved = localStorage.getItem("ruta_habitos_list");
+    return saved ? JSON.parse(saved) : [
+      { id: "h1", type: "habit", title: "Beber Vaso de Agua 💧", positive: true, negative: false, streak: 3 },
+      { id: "h2", type: "habit", title: "Comer Comida Chatarra 🍔", positive: false, negative: true, streak: 0 },
+      { id: "d1", type: "daily", title: "30 Minutos de Caminata o Deporte", done: false, streak: 5 },
+      { id: "d2", type: "daily", title: "Meditar 10 Minutos en Calma", done: false, streak: 2 }
+    ];
+  });
+
+  const [activeTab, setActiveTab] = useState("tasks"); // 'tasks', 'wardrobe', 'shop', 'stats', 'reminders'
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // New task inputs
+  const [newTitle, setNewTitle] = useState("");
+  const [newType, setNewType] = useState("habit");
+
+  // Reminders state
+  const [reminders, setReminders] = useState(() => {
+    const saved = localStorage.getItem("ruta_habitos_reminders");
+    return saved ? JSON.parse(saved) : [
+      { id: 'r1', time: '08:00', title: '¡Hora de tomar agua y estirar!', active: true },
+      { id: 'r2', time: '22:00', title: 'Momento de desconexión y lectura', active: true }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("ruta_habitos_pet", JSON.stringify(pet));
+  }, [pet]);
+
+  useEffect(() => {
+    localStorage.setItem("ruta_habitos_list", JSON.stringify(habits));
+  }, [habits]);
+
+  useEffect(() => {
+    localStorage.setItem("ruta_habitos_reminders", JSON.stringify(reminders));
+  }, [reminders]);
+
+  function triggerToast(msg) {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2800);
+  }
+
+  function launchConfetti() {
+    if (typeof confetti === "function") {
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }
+
+  // Completing habits / gain XP and Coins
+  const handleCompleteHabit = (id, isPositive = true) => {
+    if (isPositive) {
+      launchConfetti();
+      const earnedXp = 15;
+      const earnedCoins = 10;
+
+      setPet(prev => {
+        let newXp = prev.xp + earnedXp;
+        let newLevel = prev.level;
+        let xpNeeded = newLevel * 60;
+        let newHappiness = Math.min(100, prev.happiness + 5);
+
+        if (newXp >= xpNeeded) {
+          newLevel += 1;
+          newXp -= xpNeeded;
+          triggerToast(`🎉 ¡${prev.name} SUBIÓ AL NIVEL ${newLevel}!`);
+        } else {
+          triggerToast(`+${earnedXp} XP · +${earnedCoins} Monedas 🪙`);
+        }
+
+        return {
+          ...prev,
+          level: newLevel,
+          xp: newXp,
+          coins: prev.coins + earnedCoins,
+          happiness: newHappiness
+        };
+      });
+
+      setHabits(prev => prev.map(h => {
+        if (h.id === id) {
+          return { ...h, streak: (h.streak || 0) + 1, done: h.type !== 'habit' ? true : h.done };
+        }
+        return h;
+      }));
+    } else {
+      // Penalty for negative habit
+      setPet(prev => ({
+        ...prev,
+        happiness: Math.max(10, prev.happiness - 10)
+      }));
+      triggerToast(`💔 La felicidad de ${pet.name} disminuyó.`);
+    }
+  };
+
+  const handleAddCustomTask = () => {
+    if (!newTitle.trim()) return;
+    setHabits(prev => [
+      ...prev,
+      { id: "custom_" + Date.now(), type: newType, title: newTitle.trim(), positive: true, negative: false, streak: 0, done: false }
+    ]);
+    setNewTitle("");
+    triggerToast("✨ Misión añadida con éxito");
+  };
+
+  const handleAddPresetChallenge = (preset) => {
+    setHabits(prev => [
+      ...prev,
+      { id: "preset_" + Date.now(), type: preset.type, title: preset.title, positive: preset.positive ?? true, negative: preset.negative ?? false, streak: 0, done: false }
+    ]);
+    triggerToast(`🎯 Reto "${preset.title}" añadido`);
+  };
+
+  const handleBuyItem = (item) => {
+    if (pet.coins < item.price) {
+      triggerToast("❌ Monedas insuficientes");
+      return;
+    }
+    setPet(prev => ({
+      ...prev,
+      coins: prev.coins - item.price,
+      inventory: [...prev.inventory, item.id],
+      equipped: { ...prev.equipped, [item.slot]: item.id }
+    }));
+    triggerToast(`🛍️ Compraste y equipaste ${item.name}`);
+  };
+
+  const handleToggleEquip = (item) => {
+    setPet(prev => {
+      const isEquipped = prev.equipped[item.slot] === item.id;
+      return {
+        ...prev,
+        equipped: { ...prev.equipped, [item.slot]: isEquipped ? null : item.id }
+      };
+    });
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-3 py-6 space-y-6">
+      
+      {/* APP HEADER */}
+      <header className="flex flex-col md:flex-row justify-between items-center bg-forest-800 text-parchment-100 p-4 rounded-2xl border-2 border-forest-600 card-3d gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">🐾</span>
+          <div>
+            <h1 className="font-fredoka text-2xl font-bold text-gold tracking-wide">Ruta de Hábitos</h1>
+            <p className="text-xs text-sage-light font-semibold">Compañeros de Bienestar RPG</p>
+          </div>
+        </div>
+
+        {/* Quick Stats Pill */}
+        <div className="flex items-center gap-4 bg-forest-900/80 px-4 py-2 rounded-xl border border-forest-600 font-fredoka text-sm">
+          <div className="flex items-center gap-1.5 text-gold">
+            <span>🪙</span>
+            <span className="font-bold">{pet.coins} Monedas</span>
+          </div>
+          <div className="w-px h-5 bg-forest-600" />
+          <div className="flex items-center gap-1.5 text-terracotta-light">
+            <span>❤️</span>
+            <span className="font-bold">{pet.happiness}% Felicidad</span>
+          </div>
+        </div>
+      </header>
+
+      {/* ANIMAL COMPANION HERO CARD */}
+      <div className="bg-parchment-200 border-3 border-forest-800 rounded-3xl p-6 card-3d flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        
+        {/* Left Side: Animal Visual & Interactive Canvas */}
+        <div className="flex flex-col items-center">
+          <FullBodyAnimal pet={pet} scale={1.1} />
+          <div className="mt-2 text-center">
+            <span className="inline-block bg-forest-800 text-gold font-fredoka font-bold text-xs px-3 py-1 rounded-full border border-forest-600">
+              {SPECIES[pet.species]?.name} · {PERSONALITIES[pet.personality]?.name}
+            </span>
+          </div>
+        </div>
+
+        {/* Right Side: Companion Details & Vitals */}
+        <div className="flex-1 w-full space-y-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-fredoka text-2xl font-bold text-forest-900">{pet.name}</h2>
+              <span className="text-sm font-bold text-terracotta bg-terracotta/10 px-2.5 py-0.5 rounded-lg border border-terracotta/30">
+                "{pet.title}"
+              </span>
+            </div>
+            <p className="text-xs text-forest-700 font-semibold mt-0.5">
+              Nivel {pet.level} · {pet.xp} / {pet.level * 60} XP para siguiente nivel
+            </p>
+          </div>
+
+          {/* Vitals Progress Bars */}
+          <div className="space-y-2.5">
+            {/* XP Bar */}
+            <div>
+              <div className="flex justify-between text-xs font-bold text-forest-800 mb-1">
+                <span>⭐ Experiencia (XP)</span>
+                <span>{Math.floor((pet.xp / (pet.level * 60)) * 100)}%</span>
+              </div>
+              <div className="w-full bg-parchment-400 h-3.5 rounded-full overflow-hidden border border-forest-800">
+                <div 
+                  className="bg-gold h-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (pet.xp / (pet.level * 60)) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Happiness Bar */}
+            <div>
+              <div className="flex justify-between text-xs font-bold text-forest-800 mb-1">
+                <span>❤️ Felicidad de la Mascota</span>
+                <span>{pet.happiness}%</span>
+              </div>
+              <div className="w-full bg-parchment-400 h-3.5 rounded-full overflow-hidden border border-forest-800">
+                <div 
+                  className="bg-terracotta h-full transition-all duration-300"
+                  style={{ width: `${pet.happiness}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Pose Changer */}
+          <div className="pt-2 flex items-center gap-2 overflow-x-auto">
+            <span className="text-xs font-bold text-forest-800">Pose:</span>
+            {Object.values(POSES).map(p => (
+              <button
+                key={p.id}
+                onClick={() => setPet(prev => ({ ...prev, pose: p.id }))}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition border ${
+                  pet.pose === p.id 
+                    ? 'bg-forest-800 text-gold border-forest-900' 
+                    : 'bg-parchment-100 text-forest-800 border-parchment-400 hover:bg-parchment-300'
+                }`}
+              >
+                <span>{p.icon}</span>
+                <span>{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* NAVIGATION TABS */}
+      <nav className="flex gap-2 overflow-x-auto pb-1">
+        {[
+          { id: "tasks", label: "🎯 Misiones & Hábitos" },
+          { id: "wardrobe", label: "🐾 Armario & Mascota" },
+          { id: "shop", label: "🛍️ Tienda" },
+          { id: "stats", label: "🏆 Logros" },
+          { id: "reminders", label: "🔔 Recordatorios" }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 rounded-xl font-fredoka font-bold text-sm whitespace-nowrap btn-3d transition ${
+              activeTab === tab.id
+                ? "bg-gold text-forest-900 btn-3d-gold"
+                : "bg-forest-800 text-parchment-200 hover:bg-forest-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+
+      {/* TAB 1: HABITS & TASKS */}
+      {activeTab === "tasks" && (
+        <div className="space-y-6">
+          {/* Custom Task Creator */}
+          <div className="bg-parchment-200 border-2 border-forest-800 p-4 rounded-2xl card-3d flex flex-col md:flex-row gap-3">
+            <input
+              type="text"
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleAddCustomTask()}
+              placeholder="Escribe un hábito o tarea personalizada..."
+              className="flex-1 bg-parchment-100 border-2 border-parchment-400 rounded-xl px-4 py-2 text-sm text-forest-900 font-bold focus:outline-none focus:border-forest-800"
+            />
+            <select
+              value={newType}
+              onChange={e => setNewType(e.target.value)}
+              className="bg-parchment-100 border-2 border-parchment-400 rounded-xl px-3 py-2 text-sm text-forest-900 font-bold"
+            >
+              <option value="habit">🎯 Hábito (+ / -)</option>
+              <option value="daily">📝 Rutina Diaria</option>
+            </select>
+            <button
+              onClick={handleAddCustomTask}
+              className="bg-forest-800 hover:bg-forest-700 text-parchment-100 font-fredoka font-bold px-6 py-2 rounded-xl btn-3d transition"
+            >
+              + Añadir
+            </button>
+          </div>
+
+          {/* Active Tasks Columns */}
+          <div className="grid md:grid-cols-2 gap-6">
+            
+            {/* HABITS COLUMN */}
+            <div className="space-y-3">
+              <h3 className="font-fredoka font-bold text-forest-800 text-lg flex items-center gap-2">
+                <span>🎯 Hábitos Continuos</span>
+              </h3>
+              {habits.filter(h => h.type === 'habit').map(h => (
+                <div key={h.id} className="bg-parchment-100 border-2 border-forest-800 p-3.5 rounded-2xl card-3d flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-bold text-sm text-forest-900">{h.title}</div>
+                    <div className="text-xs font-bold text-gold-hover mt-0.5">🔥 Racha: {h.streak || 0} días</div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {h.positive && (
+                      <button
+                        onClick={() => handleCompleteHabit(h.id, true)}
+                        className="w-9 h-9 rounded-xl bg-sage hover:bg-sage-dark text-white font-black text-lg btn-3d flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    )}
+                    {h.negative && (
+                      <button
+                        onClick={() => handleCompleteHabit(h.id, false)}
+                        className="w-9 h-9 rounded-xl bg-terracotta hover:bg-terracotta-dark text-white font-black text-lg btn-3d-terracotta flex items-center justify-center"
+                      >
+                        -
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* DAILIES COLUMN */}
+            <div className="space-y-3">
+              <h3 className="font-fredoka font-bold text-forest-800 text-lg flex items-center gap-2">
+                <span>📝 Rutinas de Hoy</span>
+              </h3>
+              {habits.filter(h => h.type === 'daily').map(h => (
+                <div key={h.id} className={`bg-parchment-100 border-2 border-forest-800 p-3.5 rounded-2xl card-3d flex items-center justify-between gap-3 ${h.done ? 'opacity-60 bg-parchment-300' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleCompleteHabit(h.id, true)}
+                      className={`w-7 h-7 rounded-lg border-2 border-forest-800 flex items-center justify-center font-bold text-xs ${
+                        h.done ? 'bg-forest-800 text-gold' : 'bg-parchment-100'
+                      }`}
+                    >
+                      {h.done ? '✓' : ''}
+                    </button>
+                    <div>
+                      <div className={`font-bold text-sm ${h.done ? 'line-through text-forest-600' : 'text-forest-900'}`}>{h.title}</div>
+                      <div className="text-xs font-bold text-forest-600">Rutina diaria</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* HEALTH CHALLENGES PRESETS */}
+          <div className="space-y-3 pt-4 border-t-2 border-forest-800/20">
+            <h3 className="font-fredoka font-bold text-forest-800 text-lg">
+              🌿 Desafíos Saludables Sugeridos
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {PRESET_HEALTH_CHALLENGES.map((preset, idx) => (
+                <div key={idx} className="bg-parchment-200 border-2 border-forest-700/60 p-3 rounded-2xl flex flex-col justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-bold text-forest-700 uppercase">{preset.category}</span>
+                    <div className="font-bold text-sm text-forest-900">{preset.title}</div>
+                  </div>
+                  <button
+                    onClick={() => handleAddPresetChallenge(preset)}
+                    className="w-full bg-forest-800 hover:bg-forest-700 text-parchment-100 font-fredoka font-bold text-xs py-1.5 rounded-lg transition"
+                  >
+                    + Añadir Misión
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: WARDROBE & PET CUSTOMIZATION */}
+      {activeTab === "wardrobe" && (
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Left: Animal Customization Controls */}
+          <div className="bg-parchment-200 border-2 border-forest-800 p-5 rounded-2xl card-3d space-y-4">
+            <h3 className="font-fredoka font-bold text-forest-900 text-lg border-b-2 border-parchment-400 pb-2">
+              ✏️ Caracterización del Animal
+            </h3>
+
+            {/* Name & Title */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-forest-800">Nombre de la Mascota</label>
+                <input
+                  type="text"
+                  value={pet.name}
+                  onChange={e => setPet(p => ({ ...p, name: e.target.value }))}
+                  className="w-full mt-1 bg-parchment-100 border-2 border-parchment-400 rounded-xl px-3 py-1.5 text-sm font-bold text-forest-900"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-forest-800">Mote / Título</label>
+                <input
+                  type="text"
+                  value={pet.title}
+                  onChange={e => setPet(p => ({ ...p, title: e.target.value }))}
+                  className="w-full mt-1 bg-parchment-100 border-2 border-parchment-400 rounded-xl px-3 py-1.5 text-sm font-bold text-forest-900"
+                />
+              </div>
+            </div>
+
+            {/* Animal Species Selection */}
+            <div>
+              <label className="text-xs font-bold text-forest-800">Especie Animal</label>
+              <div className="grid grid-cols-5 gap-2 mt-1">
+                {Object.values(SPECIES).map(sp => (
+                  <button
+                    key={sp.id}
+                    onClick={() => setPet(p => ({ ...p, species: sp.id }))}
+                    className={`p-2 rounded-xl border-2 text-center transition ${
+                      pet.species === sp.id ? 'bg-forest-800 text-gold border-forest-900' : 'bg-parchment-100 border-parchment-400'
+                    }`}
+                  >
+                    <div className="text-xl">{sp.icon}</div>
+                    <div className="text-[10px] font-bold truncate mt-0.5">{sp.name}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Personality Selection */}
+            <div>
+              <label className="text-xs font-bold text-forest-800">Personalidad</label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {Object.values(PERSONALITIES).map(pers => (
+                  <button
+                    key={pers.id}
+                    onClick={() => setPet(p => ({ ...p, personality: pers.id }))}
+                    className={`p-2 rounded-xl border-2 text-left transition ${
+                      pet.personality === pers.id ? 'bg-forest-800 text-gold border-forest-900' : 'bg-parchment-100 border-parchment-400'
+                    }`}
+                  >
+                    <div className="font-bold text-xs">{pers.icon} {pers.name}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Palette Selection */}
+            <div>
+              <label className="text-xs font-bold text-forest-800">Color de Piel / Pelaje</label>
+              <div className="flex gap-2 mt-1 overflow-x-auto pb-1">
+                {COLOR_PALETTES.map(pal => (
+                  <button
+                    key={pal.id}
+                    onClick={() => setPet(p => ({ ...p, colorId: pal.id }))}
+                    className={`w-9 h-9 rounded-full border-2 transition-transform ${
+                      pet.colorId === pal.id ? 'scale-110 border-forest-900 ring-2 ring-gold' : 'border-parchment-400'
+                    }`}
+                    style={{ backgroundColor: pal.primary }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Multi-Slot Equipment Manager */}
+          <div className="space-y-4">
+            <h3 className="font-fredoka font-bold text-forest-800 text-lg">
+              🎒 Equipamiento de Inventario
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              {pet.inventory.map(itemId => {
+                const item = EQUIPMENT_CATALOGUE.find(i => i.id === itemId);
+                if (!item) return null;
+                const isEquipped = pet.equipped[item.slot] === item.id;
+
+                return (
+                  <div key={item.id} className={`bg-parchment-100 border-2 border-forest-800 p-3 rounded-2xl flex flex-col justify-between ${isEquipped ? 'ring-2 ring-gold bg-parchment-200' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{item.icon}</span>
+                      <div>
+                        <div className="font-bold text-xs text-forest-900">{item.name}</div>
+                        <div className="text-[10px] text-forest-600 font-semibold">{item.desc}</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleEquip(item)}
+                      className={`mt-2 w-full py-1 rounded-lg font-fredoka font-bold text-xs transition ${
+                        isEquipped ? 'bg-terracotta text-white' : 'bg-gold text-forest-900'
+                      }`}
+                    >
+                      {isEquipped ? 'Desequipar' : 'Equipar'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: SHOP */}
+      {activeTab === "shop" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {EQUIPMENT_CATALOGUE.map(item => {
+              const isOwned = pet.inventory.includes(item.id);
+              return (
+                <div key={item.id} className="bg-parchment-100 border-2 border-forest-800 p-4 rounded-2xl card-3d flex flex-col items-center text-center justify-between">
+                  <div className="text-4xl my-2">{item.icon}</div>
+                  <div className="font-bold text-sm text-forest-900">{item.name}</div>
+                  <div className="text-xs text-forest-600 font-medium my-1">{item.desc}</div>
+                  
+                  {isOwned ? (
+                    <span className="mt-2 text-xs font-bold text-sage bg-sage/20 px-3 py-1 rounded-full border border-sage">
+                      ✓ Poseído
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleBuyItem(item)}
+                      className="mt-2 w-full bg-gold hover:bg-gold-hover text-forest-900 font-fredoka font-bold text-xs py-1.5 rounded-xl btn-3d-gold transition"
+                    >
+                      Comprar 🪙 {item.price}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: ACHIEVEMENTS & STATS */}
+      {activeTab === "stats" && (
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-parchment-200 border-2 border-forest-800 p-5 rounded-2xl card-3d space-y-3">
+            <h3 className="font-fredoka font-bold text-forest-900 text-lg">🏅 Pabellón de Medallas</h3>
+            <div className="space-y-2">
+              {[
+                { title: "Pabellón del Agua", desc: "Completaste 5 hábitos de hidratación", unlocked: true, icon: "💧" },
+                { title: "Racha Incombustible", desc: "Mantuviste una racha de 3 días", unlocked: true, icon: "🔥" },
+                { title: "Coleccionista Moda", desc: "Posees más de 2 objetos en el armario", unlocked: pet.inventory.length >= 2, icon: "👑" },
+                { title: "Maestro del Bienestar", desc: "Alcanza el Nivel 5 con tu mascota", unlocked: pet.level >= 5, icon: "🌟" }
+              ].map((m, i) => (
+                <div key={i} className={`p-3 rounded-xl border-2 flex items-center gap-3 ${m.unlocked ? 'bg-parchment-100 border-forest-800' : 'bg-parchment-300/50 border-parchment-400 opacity-50'}`}>
+                  <span className="text-2xl">{m.icon}</span>
+                  <div>
+                    <div className="font-bold text-xs text-forest-900">{m.title}</div>
+                    <div className="text-[10px] text-forest-700">{m.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-parchment-200 border-2 border-forest-800 p-5 rounded-2xl card-3d space-y-3">
+            <h3 className="font-fredoka font-bold text-forest-900 text-lg">📊 Constancia Semanal</h3>
+            <div className="flex items-end justify-between h-40 pt-6 px-2">
+              {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d, i) => (
+                <div key={d} className="flex flex-col items-center gap-2 flex-1">
+                  <div className="w-6 bg-forest-800 rounded-t-lg transition-all" style={{ height: `${(i + 3) * 12}px` }} />
+                  <span className="text-[10px] font-bold text-forest-800">{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: REMINDERS */}
+      {activeTab === "reminders" && (
+        <div className="bg-parchment-200 border-2 border-forest-800 p-5 rounded-2xl card-3d space-y-4">
+          <h3 className="font-fredoka font-bold text-forest-900 text-lg">🔔 Recordatorios Activos</h3>
+          <div className="space-y-3">
+            {reminders.map(r => (
+              <div key={r.id} className="bg-parchment-100 border-2 border-forest-800 p-3 rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="font-fredoka font-bold text-gold text-sm bg-forest-800 px-2.5 py-0.5 rounded-md">{r.time}</span>
+                  <p className="font-bold text-xs text-forest-900 mt-1">{r.title}</p>
+                </div>
+                <button
+                  onClick={() => setReminders(prev => prev.map(item => item.id === r.id ? { ...item, active: !item.active } : item))}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${r.active ? 'bg-sage text-white' : 'bg-parchment-400 text-forest-800'}`}
+                >
+                  {r.active ? 'Activo' : 'Inactivo'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TOAST POPUP NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-forest-900 text-gold px-6 py-3 rounded-2xl font-fredoka font-bold border-2 border-gold shadow-2xl z-50 animate-bounce">
+          {toastMessage}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
